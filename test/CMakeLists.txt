@@ -1,0 +1,8 @@
+add_executable(
+   kja_test 
+
+    capnp-server-test.cpp
+    test.capnp.c++
+)
+target_link_libraries(kja_test PRIVATE GTest::gtest_main)
+target_link_libraries(kja_test PRIVATE CapnProto::kj CapnProto::capnp CapnProto::capnpc CapnProto::capnp-rpc)
