@@ -15,5 +15,13 @@ find_package(benchmark REQUIRED)
 find_package(CapnProto REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 
-add_subdirectory(test)
-add_subdirectory(bench)
+if(KJA_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
+if(KJA_BUILD_BENCH)
+    add_subdirectory(bench)
+endif()
+
+
