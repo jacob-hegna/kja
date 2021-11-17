@@ -15,6 +15,11 @@ find_package(benchmark REQUIRED)
 find_package(CapnProto REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 
+install(
+    DIRECTORY   include/kja
+    DESTINATION include
+)
+
 if(KJA_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
