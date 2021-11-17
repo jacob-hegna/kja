@@ -15,10 +15,10 @@ public:
 TEST(CapnpServer, Echo) {
   boost::asio::io_context ioc;
   kja::KjAsioContext ctx(&ioc);
-  kja::EzAsioServer server(&ctx, kj::heap<TestInterfaceImpl>(), "*", 5923,
-                           capnp::ReaderOptions());
+  kja::EzRpcServer server(&ctx, kj::heap<TestInterfaceImpl>(), "*", 5923,
+                          capnp::ReaderOptions());
 
-  kja::AsioRpcClient client(&ctx, "[::1]:5923", 0, capnp::ReaderOptions());
+  kja::EzRpcClient client(&ctx, "[::1]:5923", 0, capnp::ReaderOptions());
   auto cap = client.get_main<TestInterface>();
   auto req = cap.echoRequest();
   req.setReq("asdf");

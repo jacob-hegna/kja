@@ -40,12 +40,12 @@ private:
   kj::Own<kj::AsyncIoProvider> provider_;
 };
 
-struct EzAsioServer final : public capnp::SturdyRefRestorer<capnp::AnyPointer>,
-                            public kj::TaskSet::ErrorHandler {
+struct EzRpcServer final : public capnp::SturdyRefRestorer<capnp::AnyPointer>,
+                           public kj::TaskSet::ErrorHandler {
 public:
-  EzAsioServer(KjAsioContext *ctx, capnp::Capability::Client mainInterface,
-               kj::StringPtr bindAddress, uint defaultPort,
-               capnp::ReaderOptions readerOpts)
+  EzRpcServer(KjAsioContext *ctx, capnp::Capability::Client mainInterface,
+              kj::StringPtr bindAddress, uint defaultPort,
+              capnp::ReaderOptions readerOpts)
       : ctx_{ctx}, mainInterface(kj::mv(mainInterface)), portPromise(nullptr),
         tasks(*this) {
     auto paf = kj::newPromiseAndFulfiller<uint>();
@@ -65,8 +65,8 @@ public:
                       })));
   }
 
-  EzAsioServer(KjAsioContext *ctx, capnp::Capability::Client mainInterface,
-               int socketFd, uint port, capnp::ReaderOptions readerOpts)
+  EzRpcServer(KjAsioContext *ctx, capnp::Capability::Client mainInterface,
+              int socketFd, uint port, capnp::ReaderOptions readerOpts)
       : ctx_{ctx}, mainInterface(kj::mv(mainInterface)),
         portPromise(kj::Promise<uint>(port).fork()), tasks(*this) {
     acceptLoop(
@@ -74,7 +74,7 @@ public:
         readerOpts);
   }
 
-  virtual ~EzAsioServer() {}
+  virtual ~EzRpcServer() {}
 
   void acceptLoop(kj::Own<kj::ConnectionReceiver> &&listener,
                   capnp::ReaderOptions readerOpts) {
@@ -141,7 +141,7 @@ connectAttach(kj::Own<kj::NetworkAddress> &&addr) {
   return addr->connect().attach(kj::mv(addr));
 }
 
-struct AsioRpcClient {
+struct EzRpcClient {
 private:
   KjAsioContext *ctx_;
 
@@ -190,8 +190,8 @@ private:
   kj::Maybe<kj::Own<ClientContext>> clientContext;
 
 public:
-  AsioRpcClient(KjAsioContext *ctx, kj::StringPtr serverAddress,
-                uint defaultPort, capnp::ReaderOptions readerOpts)
+  EzRpcClient(KjAsioContext *ctx, kj::StringPtr serverAddress, uint defaultPort,
+              capnp::ReaderOptions readerOpts)
       : ctx_{ctx},
         setupPromise(
             ctx_->get_provider()
@@ -206,8 +206,7 @@ public:
                 })
                 .fork()) {}
 
-  AsioRpcClient(KjAsioContext *ctx, int socketFd,
-                capnp::ReaderOptions readerOpts)
+  EzRpcClient(KjAsioContext *ctx, int socketFd, capnp::ReaderOptions readerOpts)
       : ctx_(ctx), setupPromise(kj::Promise<void>(kj::READY_NOW).fork()),
         clientContext(kj::heap<ClientContext>(
             ctx_->get_ll_provider().wrapSocketFd(socketFd), readerOpts)) {}
