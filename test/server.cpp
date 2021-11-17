@@ -13,8 +13,6 @@ public:
 };
 
 TEST(CapnpServer, Echo) {
-  signal(SIGPIPE, SIG_IGN);
-
   boost::asio::io_context ioc;
   kja::KjAsioContext ctx(&ioc);
   kja::EzAsioServer server(&ctx, kj::heap<TestInterfaceImpl>(), "*", 5923,

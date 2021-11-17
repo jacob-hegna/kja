@@ -1,7 +1,7 @@
 add_executable(
    kja_test 
 
-    capnp-server-test.cpp
+    server.cpp
     test.capnp.c++
 )
 target_link_libraries(kja_test PRIVATE GTest::gtest_main)
