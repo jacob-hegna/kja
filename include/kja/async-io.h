@@ -99,8 +99,8 @@ public:
   kj::Promise<size_t> read(void *buffer, size_t minBytes,
                            size_t maxBytes) override {
     auto paf = kj::newPromiseAndFulfiller<size_t>();
-    async_fd_.async_read_some(
-        boost::asio::buffer(buffer, minBytes),
+    boost::asio::async_read(
+        async_fd_, boost::asio::buffer(buffer, minBytes),
         [ful = std::move(paf.fulfiller)](boost::system::error_code ec,
                                          size_t bytes) mutable {
           ful->fulfill(std::move(bytes));
@@ -111,8 +111,8 @@ public:
   kj::Promise<size_t> tryRead(void *buffer, size_t minBytes,
                               size_t maxBytes) override {
     auto paf = kj::newPromiseAndFulfiller<size_t>();
-    async_fd_.async_read_some(
-        boost::asio::buffer(buffer, minBytes),
+    boost::asio::async_read(
+        async_fd_, boost::asio::buffer(buffer, minBytes),
         [ful = std::move(paf.fulfiller)](boost::system::error_code ec,
                                          size_t bytes) mutable {
           ful->fulfill(std::move(bytes));
@@ -122,10 +122,10 @@ public:
 
   kj::Promise<void> write(const void *buffer, size_t size) override {
     auto paf = kj::newPromiseAndFulfiller<void>();
-    async_fd_.async_write_some(boost::asio::buffer(buffer, size),
-                               [ful = std::move(paf.fulfiller)](
-                                   boost::system::error_code ec,
-                                   size_t bytes) mutable { ful->fulfill(); });
+    boost::asio::async_write(async_fd_, boost::asio::buffer(buffer, size),
+                             [ful = std::move(paf.fulfiller)](
+                                 boost::system::error_code ec,
+                                 size_t bytes) mutable { ful->fulfill(); });
     return std::move(paf.promise);
   }
 
@@ -139,11 +139,10 @@ public:
           boost::asio::const_buffer(piece.begin(), piece.size()));
     }
 
-    async_fd_.async_write_some(
-        buffers, [ful = std::move(paf.fulfiller)](boost::system::error_code ec,
-                                                  size_t bytes) mutable {
-          ful->fulfill();
-        });
+    boost::asio::async_write(async_fd_, buffers,
+                             [ful = std::move(paf.fulfiller)](
+                                 boost::system::error_code ec,
+                                 size_t bytes) mutable { ful->fulfill(); });
     return std::move(paf.promise);
   }
 
