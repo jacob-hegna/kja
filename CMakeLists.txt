@@ -15,6 +15,9 @@ find_package(benchmark REQUIRED)
 find_package(CapnProto REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 
+link_directories(${CMAKE_CURRENT_LIST_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/manual-link/)
+link_directories(${CMAKE_CURRENT_LIST_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/)
+
 install(
     DIRECTORY   include/kja
     DESTINATION include

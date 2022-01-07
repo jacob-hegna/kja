@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <sys/fcntl.h>
 
 #include <boost/asio.hpp>
@@ -269,26 +270,48 @@ public:
 
     auto result = kj::heap<AsioIoStream>(event_port_.ioc(), fd, flags);
 
-    char clienthost[NI_MAXHOST];
-    char clientport[NI_MAXSERV];
-    int r = getnameinfo(addr, sizeof(*addr), clienthost, sizeof(clienthost),
-                        clientport, sizeof(clientport),
-                        NI_NUMERICHOST | NI_NUMERICSERV);
+    // char clienthost[NI_MAXHOST];
+    // char clientport[NI_MAXSERV];
+    // int r = getnameinfo(addr, sizeof(*addr), clienthost, sizeof(clienthost),
+    //                    clientport, sizeof(clientport),
+    //                    NI_NUMERICHOST | NI_NUMERICSERV);
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *)addr;
+    char ipAddress[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
 
-    auto a = boost::asio::ip::make_address(clienthost);
-    boost::asio::ip::tcp::endpoint e(a, std::atoi(clientport));
+    //// Need to make this ipv6 compatible
+    //auto a = boost::asio::ip::make_address(ipAddress);
+    //boost::asio::ip::tcp::endpoint e(a, std::atoi(ipAddress));
 
-    boost::asio::ip::tcp::socket soc(*ioc_);
-    soc.assign(boost::asio::ip::tcp::v4(), fd);
+    //boost::asio::ip::tcp::socket soc(*ioc_);
+    //soc.assign(boost::asio::ip::tcp::v6(), fd);
 
-    auto paf = kj::newPromiseAndFulfiller<void>();
-    soc.async_connect(e, [ful = std::move(paf.fulfiller)](auto ec) mutable {
-      ful->fulfill();
-    });
+    //auto paf = kj::newPromiseAndFulfiller<void>();
+    //soc.async_connect(e, [ful = std::move(paf.fulfiller)](auto ec) mutable {
+    //  ful->fulfill();
+    //});
 
-    // auto connected = result->on_writeable();
-    return paf.promise.then(
-        kj::mvCapture(result, [fd, soc = std::move(soc)](
+    for (;;) {
+      if (::connect(fd, addr, addrlen) < 0) {
+        int error = errno;
+        if (error == EINPROGRESS) {
+          // Fine.
+          break;
+        } else if (error != EINTR) {
+          //auto address = kj::SocketAddress(addr, addrlen).toString();
+          KJ_FAIL_SYSCALL("connect()", error, ipAddress) { break; }
+          return kj::Own<kj::AsyncIoStream>();
+        }
+      } else {
+        // no error
+        break;
+      }
+    }
+
+    auto connected = result->on_writeable();
+    // return paf.promise.then(
+    return connected.then(
+        kj::mvCapture(result, [fd](
                                   kj::Own<kj::AsyncIoStream> &&stream) mutable {
           int err;
           socklen_t errlen = sizeof(err);
@@ -296,7 +319,7 @@ public:
           if (err != 0) {
             KJ_FAIL_SYSCALL("connect()", err) { break; }
           }
-          soc.release();
+          //soc.release();
           return kj::mv(stream);
         }));
   }
